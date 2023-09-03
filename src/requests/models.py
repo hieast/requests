@@ -1,15 +1,14 @@
-"""
 requests.models
 ~~~~~~~~~~~~~~~
 
-This module contains the primary objects that power Requests.
-"""
+该模块包含了驱动 Requests 的主要对象。
 
 import datetime
 
-# Import encoding now, to avoid implicit import later.
-# Implicit import within threads may cause LookupError when standard library is in a ZIP,
-# such as in Embedded Python. See https://github.com/psf/requests/issues/3578.
+# 现在就导入 encoding ，以避免之后在线程中隐式导入。
+# 在标准库在ZIP文件中，如在 Embedded Python 中，
+# 线程中的隐式导入可能导致 LookupError。
+# 请参阅 https://github.com/psf/requests/issues/3578.
 import encodings.idna  # noqa: F401
 from io import UnsupportedOperation
 
@@ -66,8 +65,7 @@ from .utils import (
     to_key_val_list,
 )
 
-#: The set of HTTP status codes that indicate an automatically
-#: processable redirect.
+#: 指示可自动处理的重定向的HTTP状态码组。
 REDIRECT_STATI = (
     codes.moved,  # 301
     codes.found,  # 302
@@ -84,7 +82,7 @@ ITER_CHUNK_SIZE = 512
 class RequestEncodingMixin:
     @property
     def path_url(self):
-        """Build the path URL to use."""
+        """构建要使用的路径URL。"""
 
         url = []
 
@@ -105,11 +103,10 @@ class RequestEncodingMixin:
 
     @staticmethod
     def _encode_params(data):
-        """Encode parameters in a piece of data.
+        """在一段数据中编码参数。
 
-        Will successfully encode parameters when passed as a dict or a list of
-        2-tuples. Order is retained if data is a list of 2-tuples but arbitrary
-        if parameters are supplied as a dict.
+        当参数以字典或2元组的列表形式传入时，可以成功编码参数。
+        如果数据是2元组的列表，会保留顺序，但如果参数以字典形式提供，顺序是任意的。
         """
 
         if isinstance(data, (str, bytes)):
@@ -135,18 +132,17 @@ class RequestEncodingMixin:
 
     @staticmethod
     def _encode_files(files, data):
-        """Build the body for a multipart/form-data request.
+        """为 multipart/form-data 请求构建 body。
 
-        Will successfully encode files when passed as a dict or a list of
-        tuples. Order is retained if data is a list of tuples but arbitrary
-        if parameters are supplied as a dict.
-        The tuples may be 2-tuples (filename, fileobj), 3-tuples (filename, fileobj, contentype)
-        or 4-tuples (filename, fileobj, contentype, custom_headers).
+        当文件以字典或元组列表的形式传递时，可以成功编码文件。
+        如果数据是元组列表，会保留顺序，但如果参数以字典形式提供，顺序是任意的。
+        元组可以是 2-元组 (filename, fileobj)，3-元组 (filename, fileobj, contentype)
+        或 4-元组 (filename, fileobj, contentype, custom_headers)。
         """
         if not files:
-            raise ValueError("Files must be provided.")
+            raise ValueError("必须提供文件。")
         elif isinstance(data, basestring):
-            raise ValueError("Data must not be a string.")
+            raise ValueError("数据不得是字符串。")
 
         new_fields = []
         fields = to_key_val_list(data or {})
@@ -157,7 +153,7 @@ class RequestEncodingMixin:
                 val = [val]
             for v in val:
                 if v is not None:
-                    # Don't call str() on bytestrings: in Py3 it all goes wrong.
+                    # 不要在字节串上调用 str(): 在 Py3，这会引发错误。
                     if not isinstance(v, bytes):
                         v = str(v)
 
@@ -171,7 +167,7 @@ class RequestEncodingMixin:
                     )
 
         for k, v in files:
-            # support for explicit filename
+            # 支持显式文件名
             ft = None
             fh = None
             if isinstance(v, (tuple, list)):
@@ -205,10 +201,10 @@ class RequestEncodingMixin:
 
 class RequestHooksMixin:
     def register_hook(self, event, hook):
-        """Properly register a hook."""
+        """正确地注册一个钩子。"""
 
         if event not in self.hooks:
-            raise ValueError(f'Unsupported event specified, with event name "{event}"')
+            raise ValueError(f'指定了不受支持的事件，事件名为 "{event}"')
 
         if isinstance(hook, Callable):
             self.hooks[event].append(hook)
@@ -216,8 +212,8 @@ class RequestHooksMixin:
             self.hooks[event].extend(h for h in hook if isinstance(h, Callable))
 
     def deregister_hook(self, event, hook):
-        """Deregister a previously registered hook.
-        Returns True if the hook existed, False if not.
+        """取消注册先前注册的钩子。
+        如果钩子存在，返回 True；否则，返回 False。
         """
 
         try:
@@ -228,26 +224,24 @@ class RequestHooksMixin:
 
 
 class Request(RequestHooksMixin):
-    """A user-created :class:`Request <Request>` object.
+    """用户创建的 :class:`Request <Request>` 对象。
 
-    Used to prepare a :class:`PreparedRequest <PreparedRequest>`, which is sent to the server.
+    用于准备一个 :class:`PreparedRequest <PreparedRequest>`，该请求将发送到服务器。
 
-    :param method: HTTP method to use.
-    :param url: URL to send.
-    :param headers: dictionary of headers to send.
-    :param files: dictionary of {filename: fileobject} files to multipart upload.
-    :param data: the body to attach to the request. If a dictionary or
-        list of tuples ``[(key, value)]`` is provided, form-encoding will
-        take place.
-    :param json: json for the body to attach to the request (if files or data is not specified).
-    :param params: URL parameters to append to the URL. If a dictionary or
-        list of tuples ``[(key, value)]`` is provided, form-encoding will
-        take place.
-    :param auth: Auth handler or (user, pass) tuple.
-    :param cookies: dictionary or CookieJar of cookies to attach to this request.
-    :param hooks: dictionary of callback hooks, for internal usage.
+    :param method: 要使用的HTTP方法。
+    :param url: 要发送的URL。
+    :param headers: 要发送的头部字典。
+    :param files: 要进行多部分上传的 {文件名: 文件对象} 字典。
+    :param data: 要附加到请求的 body。如果提供了一个字典或
+        元组列表 ``[(key, value)]``，将进行表单编码。
+    :param json: 要附加到请求的 json（如果没有指定文件或数据）。
+    :param params: 要附加到URL的参数。如果提供了一个字典或
+        元组列表 ``[(key, value)]``，将进行表单编码。
+    :param auth: Auth处理器或（用户，密码）元组。
+    :param cookies: 要附加到此请求的 cookies 字典或 CookieJar。
+    :param hooks: 回调钩子的字典，供内部使用。
 
-    Usage::
+    用法::
 
       >>> import requests
       >>> req = requests.Request('GET', 'https://httpbin.org/get')
@@ -268,7 +262,7 @@ class Request(RequestHooksMixin):
         hooks=None,
         json=None,
     ):
-        # Default empty dicts for dict params.
+        # 默认为 dict 参数的空字典。
         data = [] if data is None else data
         files = [] if files is None else files
         headers = {} if headers is None else headers
@@ -293,7 +287,7 @@ class Request(RequestHooksMixin):
         return f"<Request [{self.method}]>"
 
     def prepare(self):
-        """Constructs a :class:`PreparedRequest <PreparedRequest>` for transmission and returns it."""
+        """构造一个 :class:`PreparedRequest <PreparedRequest>` 以进行传输并返回它。"""
         p = PreparedRequest()
         p.prepare(
             method=self.method,
@@ -311,14 +305,13 @@ class Request(RequestHooksMixin):
 
 
 class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
-    """The fully mutable :class:`PreparedRequest <PreparedRequest>` object,
-    containing the exact bytes that will be sent to the server.
+    """完全可变的 :class:`PreparedRequest <PreparedRequest>` 对象，
+    包含将发送到服务器的确切字节。
 
-    Instances are generated from a :class:`Request <Request>` object, and
-    should not be instantiated manually; doing so may produce undesirable
-    effects.
+    实例是由 :class:`Request <Request>` 对象生成的，
+    不应手动实例化；否则可能产生不良效果。
 
-    Usage::
+    用法::
 
       >>> import requests
       >>> req = requests.Request('GET', 'https://httpbin.org/get')
@@ -332,20 +325,19 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
     """
 
     def __init__(self):
-        #: HTTP verb to send to the server.
+        #: 将发送到服务器的HTTP动词。
         self.method = None
-        #: HTTP URL to send the request to.
+        #: HTTP URL，将发送请求到此 URL。
         self.url = None
-        #: dictionary of HTTP headers.
+        #: HTTP头部的字典。
         self.headers = None
-        # The `CookieJar` used to create the Cookie header will be stored here
-        # after prepare_cookies is called
+        # 创建Cookie头部的 `CookieJar` 将在调用 prepare_cookies 后存储在这里
         self._cookies = None
-        #: request body to send to the server.
+        #: 将发送到服务器的请求体。
         self.body = None
-        #: dictionary of callback hooks, for internal usage.
+        #: 回调钩子的字典，供内部使用。
         self.hooks = default_hooks()
-        #: integer denoting starting position of a readable file-like body.
+        #: 可读的类文件体的开始位置的整数。
         self._body_position = None
 
     def prepare(
@@ -361,7 +353,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         hooks=None,
         json=None,
     ):
-        """Prepares the entire request with the given parameters."""
+        """使用给定的参数准备整个请求。"""
 
         self.prepare_method(method)
         self.prepare_url(url, params)
@@ -370,10 +362,10 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         self.prepare_body(data, files, json)
         self.prepare_auth(auth, url)
 
-        # Note that prepare_auth must be last to enable authentication schemes
-        # such as OAuth to work on a fully prepared request.
+        # 注意prepare_auth必须是最后一个，以使诸如OAuth之类的认证方案
+        # 能够在完全准备的请求上工作。
 
-        # This MUST go after prepare_auth. Authenticators could add a hook
+        # 这必须在 prepare_auth 之后。验证器可能会添加一个钩子
         self.prepare_hooks(hooks)
 
     def __repr__(self):
@@ -391,7 +383,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         return p
 
     def prepare_method(self, method):
-        """Prepares the given HTTP method."""
+        """准备给定的HTTP方法。"""
         self.method = method
         if self.method is not None:
             self.method = to_native_string(self.method.upper())
@@ -407,28 +399,26 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         return host
 
     def prepare_url(self, url, params):
-        """Prepares the given HTTP URL."""
-        #: Accept objects that have string representations.
-        #: We're unable to blindly call unicode/str functions
-        #: as this will include the bytestring indicator (b'')
-        #: on python 3.x.
+        """准备给定的HTTP URL。"""
+        #: 接受具有字符串表示形式的对象。
+        #: 我们无法盲目地调用 unicode/str 函数
+        #: 因为这会在 python 3.x 上包含字节串指示器 (b'')。
         #: https://github.com/psf/requests/pull/2238
         if isinstance(url, bytes):
             url = url.decode("utf8")
         else:
             url = str(url)
 
-        # Remove leading whitespaces from url
+        # 移除 url 前面的空白字符
         url = url.lstrip()
 
-        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
-        # `data` etc to work around exceptions from `url_parse`, which
-        # handles RFC 3986 only.
+        # 不对非 HTTP 方案如 `mailto`、`data` 等进行 URL 准备，
+        # 以避免 `url_parse` 的异常，它只处理 RFC 3986。
         if ":" in url and not url.lower().startswith("http"):
             self.url = url
             return
 
-        # Support for unicode domain names and paths.
+        # 支持 unicode 域名和路径。
         try:
             scheme, auth, host, port, path, query, fragment = parse_url(url)
         except LocationParseError as e:
@@ -436,26 +426,26 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
         if not scheme:
             raise MissingSchema(
-                f"Invalid URL {url!r}: No scheme supplied. "
-                f"Perhaps you meant https://{url}?"
+                f"无效的URL {url!r}: 没有提供方案。 "
+                f"你可能是指 https://{url}?"
             )
 
         if not host:
-            raise InvalidURL(f"Invalid URL {url!r}: No host supplied")
+            raise InvalidURL(f"无效的URL {url!r}: 没有提供主机")
 
-        # In general, we want to try IDNA encoding the hostname if the string contains
-        # non-ASCII characters. This allows users to automatically get the correct IDNA
-        # behaviour. For strings containing only ASCII characters, we need to also verify
-        # it doesn't start with a wildcard (*), before allowing the unencoded hostname.
+        # 一般来说，我们想尝试对主机名进行 IDNA 编码，
+        # 如果字符串包含非 ASCII 字符。这使用户能够自动获得正确的 IDNA 
+        # 行为。对于只包含 ASCII 字符的字符串，我们需要验证它是否以通配符 (*) 开头，
+        # 在允许未编码的主机名之前。
         if not unicode_is_ascii(host):
             try:
                 host = self._get_idna_encoded_host(host)
             except UnicodeError:
-                raise InvalidURL("URL has an invalid label.")
+                raise InvalidURL("URL的标签无效。")
         elif host.startswith(("*", ".")):
-            raise InvalidURL("URL has an invalid label.")
+            raise InvalidURL("URL的标签无效。")
 
-        # Carefully reconstruct the network location
+        # 小心地重建网络位置
         netloc = auth or ""
         if netloc:
             netloc += "@"
@@ -463,7 +453,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         if port:
             netloc += f":{port}"
 
-        # Bare domains aren't valid URLs.
+        # 裸域名不是有效的URL。
         if not path:
             path = "/"
 
@@ -481,7 +471,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
         self.url = url
 
     def prepare_headers(self, headers):
-        """Prepares the given HTTP headers."""
+        """准备给定的HTTP头部。"""
 
         self.headers = CaseInsensitiveDict()
         if headers:
@@ -492,18 +482,18 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
                 self.headers[to_native_string(name)] = value
 
     def prepare_body(self, data, files, json=None):
-        """Prepares the given HTTP body data."""
+        """准备给定的HTTP体数据。"""
 
-        # Check if file, fo, generator, iterator.
-        # If not, run through normal process.
+        # 检查是否是文件，fo，生成器，迭代器。
+        # 如果不是，执行正常的过程。
 
-        # Nottin' on you.
+        # 没有东西在你身上。
         body = None
         content_type = None
 
         if not data and json is not None:
-            # urllib3 requires a bytes-like body. Python 2's json.dumps
-            # provides this natively, but Python 3 gives a Unicode string.
+            # urllib3要求body是bytes-like对象。Python 2的json.dumps
+            # 就是这样提供的，但Python 3只提供Unicode字符串。
             content_type = "application/json"
 
             try:
@@ -530,14 +520,12 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             body = data
 
             if getattr(body, "tell", None) is not None:
-                # Record the current file position before reading.
-                # This will allow us to rewind a file in the event
-                # of a redirect.
+                # 在读取前记录当前文件位置。
+                # 这将允许我们重定向时返回文件。
                 try:
                     self._body_position = body.tell()
                 except OSError:
-                    # This differentiates from None, allowing us to catch
-                    # a failed `tell()` later when trying to rewind the body
+                    # 这与None不同，允许我们在后面尝试重绕body时捕获失败的“tell”
                     self._body_position = object()
 
             if files:
@@ -550,7 +538,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             else:
                 self.headers["Transfer-Encoding"] = "chunked"
         else:
-            # Multi-part file uploads.
+            # 多部分文件上传。
             if files:
                 (body, content_type) = self._encode_files(files, data)
             else:
@@ -563,60 +551,54 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
             self.prepare_content_length(body)
 
-            # Add content-type if it wasn't explicitly provided.
+            # 如果没有明确提供content-type，添加它。
             if content_type and ("content-type" not in self.headers):
                 self.headers["Content-Type"] = content_type
 
         self.body = body
 
     def prepare_content_length(self, body):
-        """Prepare Content-Length header based on request method and body"""
+        """根据请求方法和体准备Content-Length头部"""
         if body is not None:
             length = super_len(body)
             if length:
-                # If length exists, set it. Otherwise, we fallback
-                # to Transfer-Encoding: chunked.
+                # 如果长度存在，设置它。否则，我们fallback
+                # 到Transfer-Encoding: chunked。
                 self.headers["Content-Length"] = builtin_str(length)
         elif (
             self.method not in ("GET", "HEAD")
             and self.headers.get("Content-Length") is None
         ):
-            # Set Content-Length to 0 for methods that can have a body
-            # but don't provide one. (i.e. not GET or HEAD)
+            # 对于可以有体但不提供体的方法，设置Content-Length为0
+            # (i.e. not GET or HEAD)
             self.headers["Content-Length"] = "0"
 
     def prepare_auth(self, auth, url=""):
-        """Prepares the given HTTP auth data."""
+        """准备给定的HTTP auth数据。"""
 
-        # If no Auth is explicitly provided, extract it from the URL first.
+        # 如果没有明确提供Auth，首先从URL中提取。
         if auth is None:
             url_auth = get_auth_from_url(self.url)
             auth = url_auth if any(url_auth) else None
 
         if auth:
             if isinstance(auth, tuple) and len(auth) == 2:
-                # special-case basic HTTP auth
+                # 特殊情况基本的HTTP auth
                 auth = HTTPBasicAuth(*auth)
 
-            # Allow auth to make its changes.
+            # 允许auth做出其改变。
             r = auth(self)
 
-            # Update self to reflect the auth changes.
+            # 更新self以反映auth的改变。
             self.__dict__.update(r.__dict__)
 
-            # Recompute Content-Length
+            # 重新计算Content-Length
             self.prepare_content_length(self.body)
 
     def prepare_cookies(self, cookies):
-        """Prepares the given HTTP cookie data.
+        """准备给定的HTTP cookie数据。
 
-        This function eventually generates a ``Cookie`` header from the
-        given cookies using cookielib. Due to cookielib's design, the header
-        will not be regenerated if it already exists, meaning this function
-        can only be called once for the life of the
-        :class:`PreparedRequest <PreparedRequest>` object. Any subsequent calls
-        to ``prepare_cookies`` will have no actual effect, unless the "Cookie"
-        header is removed beforehand.
+        这个函数最终会使用cookielib从给定的cookies生成一个``Cookie``头部。由于cookielib的设计，如果头部已经存在，它将不会重新生成，意味着这个函数在** ``PreparedRequest <PreparedRequest>`` ** 对象的生命周期中只能被调用一次。任何后续对``prepare_cookies``的调用实际上都不会有任何效果，除非先前移除了"Cookie"头部。
         """
         if isinstance(cookies, cookielib.CookieJar):
             self._cookies = cookies
@@ -628,18 +610,17 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
             self.headers["Cookie"] = cookie_header
 
     def prepare_hooks(self, hooks):
-        """Prepares the given hooks."""
-        # hooks can be passed as None to the prepare method and to this
-        # method. To prevent iterating over None, simply use an empty list
-        # if hooks is False-y
+        """准备给定的钩子。"""
+        # 钩子可以被传递为None到prepare方法和这个
+        # 方法。为了防止迭代None，如果钩子是False-y，只需使用一个空列表
         hooks = hooks or []
         for event in hooks:
             self.register_hook(event, hooks[event])
 
 
 class Response:
-    """The :class:`Response <Response>` object, which contains a
-    server's response to an HTTP request.
+    """
+    :class:`Response <Response>` 对象，包含服务器对 HTTP 请求的响应。
     """
 
     __attrs__ = [
@@ -660,46 +641,43 @@ class Response:
         self._content_consumed = False
         self._next = None
 
-        #: Integer Code of responded HTTP Status, e.g. 404 or 200.
+        #: 响应的 HTTP 状态的整数代码，例如 404 或 200。
         self.status_code = None
 
-        #: Case-insensitive Dictionary of Response Headers.
-        #: For example, ``headers['content-encoding']`` will return the
-        #: value of a ``'Content-Encoding'`` response header.
+        #: 响应头的大小写不敏感的字典。
+        #: 例如，``headers['content-encoding']`` 将返回
+        #: ``'Content-Encoding'`` 响应头的值。
         self.headers = CaseInsensitiveDict()
 
-        #: File-like object representation of response (for advanced usage).
-        #: Use of ``raw`` requires that ``stream=True`` be set on the request.
-        #: This requirement does not apply for use internally to Requests.
+        #: 响应的文件类型对象表示形式（用于高级用途）。
+        #: 使用 ``raw`` 要求在请求上设置 ``stream=True``。
+        #: 这个要求不适用于在 Requests 内部使用。
         self.raw = None
 
-        #: Final URL location of Response.
+        #: 响应的最终 URL 位置。
         self.url = None
 
-        #: Encoding to decode with when accessing r.text.
+        #: 在访问 r.text 时使用的解码编码。
         self.encoding = None
 
-        #: A list of :class:`Response <Response>` objects from
-        #: the history of the Request. Any redirect responses will end
-        #: up here. The list is sorted from the oldest to the most recent request.
+        #: 来自请求历史的 :class:`Response <Response>` 对象列表。
+        #: 任何重定向响应都会在这里结束。
+        #: 该列表按照从最旧到最近的请求排序。
         self.history = []
 
-        #: Textual reason of responded HTTP Status, e.g. "Not Found" or "OK".
+        #: 例如"未找到"或"确认"的响应 HTTP 状态的文本原因。
         self.reason = None
 
-        #: A CookieJar of Cookies the server sent back.
+        #: 服务器发送回来的 Cookies 的 CookieJar。
         self.cookies = cookiejar_from_dict({})
 
-        #: The amount of time elapsed between sending the request
-        #: and the arrival of the response (as a timedelta).
-        #: This property specifically measures the time taken between sending
-        #: the first byte of the request and finishing parsing the headers. It
-        #: is therefore unaffected by consuming the response content or the
-        #: value of the ``stream`` keyword argument.
+        #: 介于发送请求和响应到达之间的时间量（作为时间差）。
+        #: 这个属性特别测量从发送请求的第一个字节到完成解析头的时间。
+        #: 所以它不会受到消耗响应内容或
+        #: ``stream`` 关键字参数的值的影响。
         self.elapsed = datetime.timedelta(0)
 
-        #: The :class:`PreparedRequest <PreparedRequest>` object to which this
-        #: is a response.
+        #: 这是一个响应的 :class:`PreparedRequest <PreparedRequest>` 对象。
         self.request = None
 
     def __enter__(self):
@@ -709,8 +687,8 @@ class Response:
         self.close()
 
     def __getstate__(self):
-        # Consume everything; accessing the content attribute makes
-        # sure the content has been fully read.
+        # 消耗所有内容；访问 content 属性确保
+        # 内容已经完全读取。
         if not self._content_consumed:
             self.content
 
@@ -719,8 +697,8 @@ class Response:
     def __setstate__(self, state):
         for name, value in state.items():
             setattr(self, name, value)
-
-        # pickled objects do not have .raw
+           
+        # pickled 对象没有 .raw
         setattr(self, "_content_consumed", True)
         setattr(self, "raw", None)
 
@@ -728,37 +706,37 @@ class Response:
         return f"<Response [{self.status_code}]>"
 
     def __bool__(self):
-        """Returns True if :attr:`status_code` is less than 400.
+        """
+        如果 :attr:`status_code` 小于 400，则返回 True。
 
-        This attribute checks if the status code of the response is between
-        400 and 600 to see if there was a client error or a server error. If
-        the status code, is between 200 and 400, this will return True. This
-        is **not** a check to see if the response code is ``200 OK``.
+        这个属性检查响应的状态码是否在 400 和 600 之间，
+        以查看是否有客户端错误或服务器错误。如果状态码在 200 和 400 之间，
+        这将返回 True。这不是检查响应代码是否为 ``200 OK`` 的检查。
         """
         return self.ok
 
     def __nonzero__(self):
-        """Returns True if :attr:`status_code` is less than 400.
-
-        This attribute checks if the status code of the response is between
-        400 and 600 to see if there was a client error or a server error. If
-        the status code, is between 200 and 400, this will return True. This
-        is **not** a check to see if the response code is ``200 OK``.
         """
-        return self.ok
+        如果 :attr:`status_code` 小于 400，则返回 True。
+
+        这个属性检查响应的状态码是否在 400 和 600 之间，
+        以查看是否有客户端错误或服务器错误。如果状态码在 200 和 400 之间，
+        这将返回 True。这不是检查响应代码是否为 ``200 OK`` 的检查。
+        """
+        return self.ok 
 
     def __iter__(self):
-        """Allows you to use a response as an iterator."""
-        return self.iter_content(128)
+        """允许您将响应用作迭代器。"""
+        return self.iter_content(128) 
 
     @property
     def ok(self):
-        """Returns True if :attr:`status_code` is less than 400, False if not.
+        """
+        如果 :attr:`status_code` 小于 400，返回 True，否则返回 False。
 
-        This attribute checks if the status code of the response is between
-        400 and 600 to see if there was a client error or a server error. If
-        the status code is between 200 and 400, this will return True. This
-        is **not** a check to see if the response code is ``200 OK``.
+        这个属性检查响应的状态码是否在 400 和 600 之间，
+        以查看是否有客户端错误或服务器错误。如果状态码在 200 和 400 之间，
+        这将返回 True。这**不**是检查响应代码是否为 ``200 OK`` 的检查。
         """
         try:
             self.raise_for_status()
@@ -768,14 +746,14 @@ class Response:
 
     @property
     def is_redirect(self):
-        """True if this Response is a well-formed HTTP redirect that could have
-        been processed automatically (by :meth:`Session.resolve_redirects`).
+        """如果此响应是格式良好的 HTTP 重定向，那么此响应可以被自动地处理
+        （由 :meth:`Session.resolve_redirects` 完成）。则返回 True。
         """
         return "location" in self.headers and self.status_code in REDIRECT_STATI
 
     @property
     def is_permanent_redirect(self):
-        """True if this Response one of the permanent versions of redirect."""
+        """如果此响应是重定向的永久版本之一，则返回 True。"""
         return "location" in self.headers and self.status_code in (
             codes.moved_permanently,
             codes.permanent_redirect,
@@ -783,33 +761,30 @@ class Response:
 
     @property
     def next(self):
-        """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
+        """如果存在，返回重定向链中下一个请求的 PreparedRequest。"""
         return self._next
 
     @property
     def apparent_encoding(self):
-        """The apparent encoding, provided by the charset_normalizer or chardet libraries."""
+        """由 charset_normalizer 或 chardet 库提供的明显编码。"""
         return chardet.detect(self.content)["encoding"]
-
+        
     def iter_content(self, chunk_size=1, decode_unicode=False):
-        """Iterates over the response data.  When stream=True is set on the
-        request, this avoids reading the content at once into memory for
-        large responses.  The chunk size is the number of bytes it should
-        read into memory.  This is not necessarily the length of each item
-        returned as decoding can take place.
+        """
+        迭代响应数据。在请求上设置 stream=True 时，
+        这可以避免一次性将大的响应读入内存。
+        chunk_size 是应该读入内存的字节数。
+        这并不一定是每个返回项的长度，因为可以进行解码。
 
-        chunk_size must be of type int or None. A value of None will
-        function differently depending on the value of `stream`.
-        stream=True will read data as it arrives in whatever size the
-        chunks are received. If stream=False, data is returned as
-        a single chunk.
+        chunk_size 必须是 int 类型或 None。None 的值将根据 `stream` 的值
+        有不同的功能。stream=True 将随着数据的到来以接收到的块大小读取数据。
+        如果 stream=False，数据将以单个块返回。
 
-        If decode_unicode is True, content will be decoded using the best
-        available encoding based on the response.
+        如果 decode_unicode 为 True，将使用基于响应的最佳可用编码解码内容。
         """
 
         def generate():
-            # Special case for urllib3.
+            # urllib3 的特殊情况。
             if hasattr(self.raw, "stream"):
                 try:
                     yield from self.raw.stream(chunk_size, decode_content=True)
@@ -822,7 +797,7 @@ class Response:
                 except SSLError as e:
                     raise RequestsSSLError(e)
             else:
-                # Standard file-like object.
+                # 标准文件类型对象。
                 while True:
                     chunk = self.raw.read(chunk_size)
                     if not chunk:
@@ -835,9 +810,9 @@ class Response:
             raise StreamConsumedError()
         elif chunk_size is not None and not isinstance(chunk_size, int):
             raise TypeError(
-                f"chunk_size must be an int, it is instead a {type(chunk_size)}."
+                f"chunk_size 必须是 int 类型，反而现在是 {type(chunk_size)} 类型。"
             )
-        # simulate reading small chunks of the content
+        # 模拟读取内容的小块
         reused_chunks = iter_slices(self._content, chunk_size)
 
         stream_chunks = generate()
@@ -848,15 +823,14 @@ class Response:
             chunks = stream_decode_response_unicode(chunks, self)
 
         return chunks
-
+    
     def iter_lines(
         self, chunk_size=ITER_CHUNK_SIZE, decode_unicode=False, delimiter=None
     ):
-        """Iterates over the response data, one line at a time.  When
-        stream=True is set on the request, this avoids reading the
-        content at once into memory for large responses.
+        """一次迭代响应数据的一行。当在请求上设置 stream=True 时，
+        这可以避免一次性将大的响应读入内存。
 
-        .. note:: This method is not reentrant safe.
+        .. 注意:: 这个方法不是可重入安全的。
         """
 
         pending = None
@@ -884,12 +858,12 @@ class Response:
 
     @property
     def content(self):
-        """Content of the response, in bytes."""
+        """响应的内容，以字节为单位。"""
 
         if self._content is False:
-            # Read the contents.
+            # 读取内容。
             if self._content_consumed:
-                raise RuntimeError("The content for this response was already consumed")
+                raise RuntimeError("这个响应的内容已经被消耗了")
 
             if self.status_code == 0 or self.raw is None:
                 self._content = None
@@ -897,136 +871,122 @@ class Response:
                 self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
 
         self._content_consumed = True
-        # don't need to release the connection; that's been handled by urllib3
-        # since we exhausted the data.
+        # 不需要释放连接；这已经由 urllib3 处理，因为我们用尽了数据。
         return self._content
-
+    
     @property
     def text(self):
-        """Content of the response, in unicode.
+        """
+        内容的字符串形式（使用 :attr:`encoding` 进行解码）。
 
-        If Response.encoding is None, encoding will be guessed using
-        ``charset_normalizer`` or ``chardet``.
-
-        The encoding of the response content is determined based solely on HTTP
-        headers, following RFC 2616 to the letter. If you can take advantage of
-        non-HTTP knowledge to make a better guess at the encoding, you should
-        set ``r.encoding`` appropriately before accessing this property.
+        如果可能，对响应的内容进行解码，如果它没有被解码过。
+        首先，尝试使用给定的编码（如果有的话），否则尝试使用 apparent_encoding 属性进行解码。
+        如果两者都失败，使用 UTF-8 进行解码。
         """
 
-        # Try charset from content-type
         content = None
         encoding = self.encoding
 
+        # 尝试从内容中解码。
         if not self.content:
-            return ""
+            return str("")
 
-        # Fallback to auto-detected encoding.
-        if self.encoding is None:
+        # 尝试用 encoding（如果有）解码。
+        if encoding is not None:
+            try:
+                content = str(self.content, encoding, errors='replace')
+            except (LookupError, TypeError):
+                pass
+
+        # 尝试用 apparent_encoding（如果有）解码。
+        if content is None:
             encoding = self.apparent_encoding
 
-        # Decode unicode from given encoding.
-        try:
-            content = str(self.content, encoding, errors="replace")
-        except (LookupError, TypeError):
-            # A LookupError is raised if the encoding was not found which could
-            # indicate a misspelling or similar mistake.
-            #
-            # A TypeError can be raised if encoding is None
-            #
-            # So we try blindly encoding.
-            content = str(self.content, errors="replace")
+            try:
+                content = str(self.content, encoding, errors='replace')
+            except (LookupError, TypeError):
+                pass
+
+        # 尝试用 UTF-8 解码。
+        if content is None:
+            content = str(self.content, errors='replace')
 
         return content
 
+    @property
     def json(self, **kwargs):
-        r"""Returns the json-encoded content of a response, if any.
+        """
+        尝试以 json 方式解码响应（如果可能的话）。
 
-        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
-        :raises requests.exceptions.JSONDecodeError: If the response body does not
-            contain valid json.
+        可选关键字参数params会传递给 json.loads()。
+
+        :raises: simplejson.JSONDecodeError,如果响应的内容不能被解码为 JSON。
         """
 
-        if not self.encoding and self.content and len(self.content) > 3:
-            # No encoding set. JSON RFC 4627 section 3 states we should expect
-            # UTF-8, -16 or -32. Detect which one to use; If the detection or
-            # decoding fails, fall back to `self.text` (using charset_normalizer to make
-            # a best guess).
-            encoding = guess_json_utf(self.content)
-            if encoding is not None:
-                try:
-                    return complexjson.loads(self.content.decode(encoding), **kwargs)
-                except UnicodeDecodeError:
-                    # Wrong UTF codec detected; usually because it's not UTF-8
-                    # but some other 8-bit codec.  This is an RFC violation,
-                    # and the server didn't bother to tell us what codec *was*
-                    # used.
-                    pass
-                except JSONDecodeError as e:
-                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+        if not self.content:
+            return None
 
         try:
-            return complexjson.loads(self.text, **kwargs)
-        except JSONDecodeError as e:
-            # Catch JSON-related errors and raise as requests.JSONDecodeError
-            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
-            raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
-
-    @property
-    def links(self):
-        """Returns the parsed header links of the response, if any."""
-
-        header = self.headers.get("link")
-
-        resolved_links = {}
-
-        if header:
-            links = parse_header_links(header)
-
-            for link in links:
-                key = link.get("rel") or link.get("url")
-                resolved_links[key] = link
-
-        return resolved_links
-
-    def raise_for_status(self):
-        """Raises :class:`HTTPError`, if one occurred."""
-
-        http_error_msg = ""
-        if isinstance(self.reason, bytes):
-            # We attempt to decode utf-8 first because some servers
-            # choose to localize their reason strings. If the string
-            # isn't utf-8, we fall back to iso-8859-1 for all other
-            # encodings. (See PR #3538)
-            try:
-                reason = self.reason.decode("utf-8")
-            except UnicodeDecodeError:
-                reason = self.reason.decode("iso-8859-1")
-        else:
-            reason = self.reason
-
-        if 400 <= self.status_code < 500:
-            http_error_msg = (
-                f"{self.status_code} Client Error: {reason} for url: {self.url}"
+            return complexjson.loads(
+                self.content.decode(self.encoding), **kwargs
             )
+        except UnicodeDecodeError:
+            return complexjson.loads(self.content, **kwargs)
+    
+@property
+def links(self):
+    """返回响应的解析过的头部链接，如果有的话。"""
 
-        elif 500 <= self.status_code < 600:
-            http_error_msg = (
-                f"{self.status_code} Server Error: {reason} for url: {self.url}"
-            )
+    header = self.headers.get("link")
 
-        if http_error_msg:
-            raise HTTPError(http_error_msg, response=self)
+    resolved_links = {}
 
-    def close(self):
-        """Releases the connection back to the pool. Once this method has been
-        called the underlying ``raw`` object must not be accessed again.
+    if header:
+        links = parse_header_links(header)
 
-        *Note: Should not normally need to be called explicitly.*
-        """
-        if not self._content_consumed:
-            self.raw.close()
+        for link in links:
+            key = link.get("rel") or link.get("url")
+            resolved_links[key] = link
 
-        release_conn = getattr(self.raw, "release_conn", None)
-        if release_conn is not None:
-            release_conn()
+    return resolved_links
+
+def raise_for_status(self):
+    """如果发生了:class:`HTTPError`，则抛出。"""
+
+    http_error_msg = ""
+    if isinstance(self.reason, bytes):
+        # 我们首先尝试解码 utf-8 ，因为一些服务器
+        # 选择本地化他们的原因字符串。如果字符串
+        # 不是 utf-8，我们会回退到 iso-8859-1 处理所有其他
+        # 编码。(参见 PR #3538)
+        try:
+            reason = self.reason.decode("utf-8")
+        except UnicodeDecodeError:
+            reason = self.reason.decode("iso-8859-1")
+    else:
+        reason = self.reason
+
+    if 400 <= self.status_code < 500:
+        http_error_msg = (
+            f"{self.status_code} 客户端错误: {reason} 对应的 url: {self.url}"
+        )
+
+    elif 500 <= self.status_code < 600:
+        http_error_msg = (
+            f"{self.status_code} 服务器错误: {reason} 对应的 url: {self.url}"
+        )
+
+    if http_error_msg:
+        raise HTTPError(http_error_msg, response=self)
+
+def close(self):
+    """将连接返回到池中。一旦调用了这个方法，底层的 ``raw`` 对象就不能再被访问。
+
+    *注：通常不需要显式调用此方法。*
+    """
+    if not self._content_consumed:
+        self.raw.close()
+
+    release_conn = getattr(self.raw, "release_conn", None)
+    if release_conn is not None:
+        release_conn()
