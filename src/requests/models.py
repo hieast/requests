@@ -933,61 +933,61 @@ class Response:
             )
         except UnicodeDecodeError:
             return complexjson.loads(self.content, **kwargs)
-    
-@property
-def links(self):
-    """返回响应的解析过的头部链接，如果有的话。"""
+        
+    @property
+    def links(self):
+        """返回响应的解析过的头部链接，如果有的话。"""
 
-    header = self.headers.get("link")
+        header = self.headers.get("link")
 
-    resolved_links = {}
+        resolved_links = {}
 
-    if header:
-        links = parse_header_links(header)
+        if header:
+            links = parse_header_links(header)
 
-        for link in links:
-            key = link.get("rel") or link.get("url")
-            resolved_links[key] = link
+            for link in links:
+                key = link.get("rel") or link.get("url")
+                resolved_links[key] = link
 
-    return resolved_links
+        return resolved_links
 
-def raise_for_status(self):
-    """如果发生了:class:`HTTPError`，则抛出。"""
+    def raise_for_status(self):
+        """如果发生了:class:`HTTPError`，则抛出。"""
 
-    http_error_msg = ""
-    if isinstance(self.reason, bytes):
-        # 我们首先尝试解码 utf-8 ，因为一些服务器
-        # 选择本地化他们的原因字符串。如果字符串
-        # 不是 utf-8，我们会回退到 iso-8859-1 处理所有其他
-        # 编码。(参见 PR #3538)
-        try:
-            reason = self.reason.decode("utf-8")
-        except UnicodeDecodeError:
-            reason = self.reason.decode("iso-8859-1")
-    else:
-        reason = self.reason
+        http_error_msg = ""
+        if isinstance(self.reason, bytes):
+            # 我们首先尝试解码 utf-8 ，因为一些服务器
+            # 选择本地化他们的原因字符串。如果字符串
+            # 不是 utf-8，我们会回退到 iso-8859-1 处理所有其他
+            # 编码。(参见 PR #3538)
+            try:
+                reason = self.reason.decode("utf-8")
+            except UnicodeDecodeError:
+                reason = self.reason.decode("iso-8859-1")
+        else:
+            reason = self.reason
 
-    if 400 <= self.status_code < 500:
-        http_error_msg = (
-            f"{self.status_code} 客户端错误: {reason} 对应的 url: {self.url}"
-        )
+        if 400 <= self.status_code < 500:
+            http_error_msg = (
+                f"{self.status_code} 客户端错误: {reason} 对应的 url: {self.url}"
+            )
 
-    elif 500 <= self.status_code < 600:
-        http_error_msg = (
-            f"{self.status_code} 服务器错误: {reason} 对应的 url: {self.url}"
-        )
+        elif 500 <= self.status_code < 600:
+            http_error_msg = (
+                f"{self.status_code} 服务器错误: {reason} 对应的 url: {self.url}"
+            )
 
-    if http_error_msg:
-        raise HTTPError(http_error_msg, response=self)
+        if http_error_msg:
+            raise HTTPError(http_error_msg, response=self)
 
-def close(self):
-    """将连接返回到池中。一旦调用了这个方法，底层的 ``raw`` 对象就不能再被访问。
+    def close(self):
+        """将连接返回到池中。一旦调用了这个方法，底层的 ``raw`` 对象就不能再被访问。
 
-    *注：通常不需要显式调用此方法。*
-    """
-    if not self._content_consumed:
-        self.raw.close()
+        *注：通常不需要显式调用此方法。*
+        """
+        if not self._content_consumed:
+            self.raw.close()
 
-    release_conn = getattr(self.raw, "release_conn", None)
-    if release_conn is not None:
-        release_conn()
+        release_conn = getattr(self.raw, "release_conn", None)
+        if release_conn is not None:
+            release_conn()
