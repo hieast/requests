@@ -10,9 +10,7 @@ dev
 -------------------
 
 **Security**
-- Versions of Requests between v2.3.0 and v2.30.0 are vulnerable to potential
-  forwarding of `Proxy-Authorization` headers to destination servers when
-  following HTTPS redirects.
+- Versions of Requests between v2.3.0 and v2.30.0 are vulnerable to potential forwarding of `Proxy-Authorization` headers to destination servers when following HTTPS redirects.
 
   When proxies are defined with user info (https://user:pass@proxy:8080), Requests
   will construct a `Proxy-Authorization` header that is attached to the request to
